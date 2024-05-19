@@ -37,8 +37,8 @@ PACKED_STRUCT_END
 static int GetBMPStride(int w) {
     const int bytes_per_pixel = 3;
     const int alignment = 4;
-    const int rounding = 3
-    return 4 * ((w * bytes_per_pixel + rounding) / alignment);
+    const int rounding = 3;
+    return alignment * ((w * bytes_per_pixel + rounding) / alignment);
 }
 
 bool SaveBMP(const Path& file, const Image& image) {
@@ -72,29 +72,42 @@ bool SaveBMP(const Path& file, const Image& image) {
 
 Image LoadBMP(const Path& file) {
     ifstream ifs(file, ios::binary);
+    if (!ifs) {
+        return Image();
+    }
+
+    char signature[2];
+    ifs.read(signature, 2);
+    if (signature[0] != 'B' || signature[1] != 'M') {
+        return Image();
+    }
+
     int width, height;
-    ifs.ignore(18);
+    ifs.seekg(18, ios::beg);
     if (!ifs.read(reinterpret_cast<char*>(&width), sizeof(width))) {
         return Image();
     }
     if (!ifs.read(reinterpret_cast<char*>(&height), sizeof(height))) {
         return Image();
     }
-    ifs.ignore(28);
+    ifs.seekg(28, ios::cur);
 
     int stride = GetBMPStride(width);
     auto color = Color::Black();
-    Image result(stride / 3, height, color);
-    std::vector<char> buff(width * 3);
+    const int bytes_per_pixel = 3;
+    Image result(stride / bytes_per_pixel, height, color);
+    std::vector<char> buff(width * bytes_per_pixel);
 
     for (int y = result.GetHeight() - 1; y >= 0; --y) {
         Color* line = result.GetLine(y);
-        ifs.read(buff.data(), stride);
+        if (!ifs.read(buff.data(), stride)) {
+            return Image();
+        }
 
         for (int x = 0; x < width; ++x) {
-            line[x].b = static_cast<byte>(buff[x * 3 + 0]);
-            line[x].g = static_cast<byte>(buff[x * 3 + 1]);
-            line[x].r = static_cast<byte>(buff[x * 3 + 2]);
+            line[x].b = static_cast<byte>(buff[x * bytes_per_pixel + 0]);
+            line[x].g = static_cast<byte>(buff[x * bytes_per_pixel + 1]);
+            line[x].r = static_cast<byte>(buff[x * bytes_per_pixel + 2]);
         }
     }
     return result;
