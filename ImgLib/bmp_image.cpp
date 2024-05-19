@@ -57,13 +57,14 @@ bool SaveBMP(const Path& file, const Image& image) {
     ofstream out(file, ios::binary);
     out.write(reinterpret_cast<const char*>(&file_header), sizeof(file_header));
     out.write(reinterpret_cast<const char*>(&info_header), sizeof(info_header));    
-    vector<char> buff(stride);  
+    vector<char> buff(stride);
+    const int bytes_per_pixel = 3;
     for (int y = image.GetHeight() - 1; y >= 0; --y) {
         const Color* line = image.GetLine(y);
         for (int x = 0; x < image.GetWidth(); ++x) {
-            buff[x * 3 + 0] = static_cast<char>(line[x].b);
-            buff[x * 3 + 1] = static_cast<char>(line[x].g);
-            buff[x * 3 + 2] = static_cast<char>(line[x].r);
+            buff[x * bytes_per_pixel + 0] = static_cast<char>(line[x].b);
+            buff[x * bytes_per_pixel + 1] = static_cast<char>(line[x].g);
+            buff[x * bytes_per_pixel + 2] = static_cast<char>(line[x].r);
         }
         out.write(reinterpret_cast<const char*>(buff.data()), stride);
     }
