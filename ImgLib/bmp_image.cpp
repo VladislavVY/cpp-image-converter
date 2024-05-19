@@ -35,7 +35,10 @@ PACKED_STRUCT_END
 
 // функция вычисления отступа по ширине
 static int GetBMPStride(int w) {
-    return 4 * ((w * 3 + 3) / 4);
+    const int bytes_per_pixel = 3;
+    const int alignment = 4;
+    const int rounding = 3
+    return 4 * ((w * bytes_per_pixel + rounding) / alignment);
 }
 
 bool SaveBMP(const Path& file, const Image& image) {
@@ -71,8 +74,12 @@ Image LoadBMP(const Path& file) {
     ifstream ifs(file, ios::binary);
     int width, height;
     ifs.ignore(18);
-    ifs.read(reinterpret_cast<char*>(&width), sizeof(width));
-    ifs.read(reinterpret_cast<char*>(&height), sizeof(height));
+    if (!ifs.read(reinterpret_cast<char*>(&width), sizeof(width))) {
+        return Image();
+    }
+    if (!ifs.read(reinterpret_cast<char*>(&height), sizeof(height))) {
+        return Image();
+    }
     ifs.ignore(28);
 
     int stride = GetBMPStride(width);
