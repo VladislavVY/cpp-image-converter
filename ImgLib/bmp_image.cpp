@@ -77,10 +77,10 @@ Image LoadBMP(const Path& file) {
         return Image();
     }
 
-    char signature[2];
-    ifs.read(signature, 2);
-    if (signature[0] != 'B' || signature[1] != 'M') {
-        return Image();
+    char sign1, sign2;
+    if (!ifs.read(&sign1, 1) || !ifs.read(&sign2, 1) || 
+        sign1 != 'B' || sign2 != 'M') {
+        return Image(); 
     }
 
     int width, height;
